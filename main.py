@@ -23,13 +23,18 @@ def output_path():
 
 def verify(path):
     """Read the file back and enforce the competition gate: UTF-8 text,
-    1 to 200 characters, not only whitespace, exactly one line."""
-    with open(path, "r", encoding="utf-8") as f:
-        text = f.read()
+    1 to 200 characters, not only whitespace, exactly one line.
+
+    Reads raw bytes first so the check is byte-exact: a stray BOM,
+    a CRLF ending, or a trailing newline all fail here instead of
+    slipping through a forgiving text-mode read."""
+    with open(path, "rb") as f:
+        raw = f.read()
+    text = raw.decode("utf-8")  # strict: invalid UTF-8 raises
+    assert raw == LINE.encode("utf-8"), "entry bytes do not match the chosen line"
     assert 1 <= len(text) <= 200, "entry must be 1-200 chars, got %d" % len(text)
     assert text.strip(), "entry must not be only whitespace"
     assert "\n" not in text, "entry must be a single line"
-    assert text == LINE, "entry does not match the chosen line"
     return text
 
 
